@@ -156,112 +156,193 @@ const API_CONFIG = {
     // OpenClaw Gateway API 端点（需要根据实际情况配置）
     gatewayEndpoint: '', // 例如: 'http://localhost:3333/api/agents'
 
+    // Gateway WebSocket 端点
+    websocketEndpoint: '', // 例如: 'ws://localhost:3333'
+
     // 使用真实数据的开关
     useRealData: false, // 设为 true 启用真实数据，false 使用模拟数据
+
+    // 使用 WebSocket 实时更新
+    useWebSocket: false, // 设为 true 启用 WebSocket
 
     // 数据刷新间隔（毫秒）
     refreshInterval: 30000
 };
 
+// ==================== WebSocket 实时更新 ====================
+
+let wsConnection = null;
+let wsReconnectTimer = null;
+
 /**
- * 从 OpenClaw Gateway 获取真实 Agent 数据
+ * 初始化 WebSocket 连接
  */
-async function fetchRealAgentData() {
+function initWebSocket() {
+    if (!API_CONFIG.useWebSocket || !API_CONFIG.websocketEndpoint) {
+        console.log('WebSocket 未启用');
+        return;
+    }
+
+    if (wsConnection) {
+        wsConnection.close();
+    }
+
     try {
-        const response = await fetch(`${API_CONFIG.gatewayEndpoint}/agents`);
+        wsConnection = new WebSocket(API_CONFIG.websocketEndpoint);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        wsConnection.onopen = () => {
+            console.log('✅ WebSocket 连接已建立');
+            showNotification('WebSocket 已连接', 'success');
+            cancelReconnect();
+        };
 
-        const data = await response.json();
+        wsConnection.onmessage = (event) => {
+            handleWebSocketMessage(event.data);
+        };
 
-        // 将 API 数据转换为我们的格式
-        const formattedAgents = data.agents.map(apiAgent => ({
-            id: apiAgent.sessionKey || apiAgent.id,
-            name: apiAgent.label || apiAgent.name || `Agent ${apiAgent.id}`,
-            type: apiAgent.kind || apiAgent.type || '助手',
-            description: apiAgent.description || '智能助手',
-            status: mapApiStatus(apiAgent.status),
-            subStatus: mapSubStatus(apiAgent.status),
-            currentTask: apiAgent.currentTask || null,
-            tasksCompleted: apiAgent.tasksCompleted || 0,
-            uptime: apiAgent.uptime || '99.0%',
-            lastActive: apiAgent.lastActive || '刚刚'
-        }));
+        wsConnection.onerror = (error) => {
+            console.error('WebSocket 错误:', error);
+        };
 
-        return formattedAgents;
+        wsConnection.onclose = () => {
+            console.log('WebSocket 连接已断开');
+            scheduleReconnect();
+        };
     } catch (error) {
-        console.warn('获取真实数据失败，使用模拟数据:', error.message);
-        return null;
+        console.error('WebSocket 初始化失败:', error);
+        scheduleReconnect();
     }
 }
 
 /**
- * 映射 API 状态到我们的状态格式
+ * 处理 WebSocket 消息
  */
-function mapApiStatus(apiStatus) {
-    const statusLower = apiStatus.toLowerCase();
+function handleWebSocketMessage(data) {
+    try {
+        const message = JSON.parse(data);
 
-    if (statusLower.includes('busy') || statusLower.includes('active')) {
-        return 'busy';
-    } else if (statusLower.includes('idle') || statusLower.includes('waiting')) {
-        return 'idle';
-    } else if (statusLower.includes('offline') || statusLower.includes('disconnected')) {
-        return 'offline';
-    }
+        // 处理不同类型的消息
+        switch (message.type) {
+            case 'agent_status':
+                updateAgentStatus(message.agent);
+                break;
 
-    return 'idle'; // 默认状态
-}
+            case 'agent_added':
+                addAgent(message.agent);
+                showNotification(`新 Agent 已加入: ${message.agent.name}`, 'info');
+                break;
 
-/**
- * 映射子状态
- */
-function mapSubStatus(status) {
-    const statusLower = status.toLowerCase();
+            case 'agent_removed':
+                removeAgent(message.agentId);
+                showNotification(`Agent 已移除: ${message.agentId}`, 'info');
+                break;
 
-    if (statusLower.includes('busy') || statusLower.includes('active')) {
-        return 'working';
-    }
+            case 'workflow':
+                addWorkflowEvent(message.workflow);
+                break;
 
-    // 空闲状态随机分配
-    return Math.random() > 0.5 ? 'sofa' : 'coffee';
-}
-
-/**
- * 更新 Agent 数据
- */
-async function updateAgentData() {
-    if (API_CONFIG.useRealData && API_CONFIG.gatewayEndpoint) {
-        const realData = await fetchRealAgentData();
-
-        if (realData && realData.length > 0) {
-            agents = realData;
-            console.log('✅ 已更新为真实数据:', agents.length, '个 Agent');
+            default:
+                console.log('未知消息类型:', message.type);
         }
+    } catch (error) {
+        console.error('解析 WebSocket 消息失败:', error);
+    }
+}
+
+/**
+ * 更新单个 Agent 状态
+ */
+function updateAgentStatus(agentData) {
+    const index = agents.findIndex(a => a.id === agentData.id || a.id === agentData.sessionKey);
+
+    if (index >= 0) {
+        // 更新现有 Agent
+        agents[index] = {
+            ...agents[index],
+            ...agentData,
+            lastActive: '刚刚'
+        };
+    } else {
+        // 添加新 Agent
+        agents.push(formatAgentData(agentData));
     }
 
     renderAgents();
 }
 
 /**
- * 切换数据源（真实/模拟）
+ * 添加新 Agent
  */
-function toggleDataSource() {
-    API_CONFIG.useRealData = !API_CONFIG.useRealData;
-
-    if (API_CONFIG.useRealData) {
-        alert('已切换到真实数据源（如果可用）');
-    } else {
-        agents = [...defaultAgents];
-        alert('已切换到模拟数据');
-        renderAgents();
-    }
-
-    updateAgentData();
+function addAgent(agentData) {
+    const formatted = formatAgentData(agentData);
+    agents.push(formatted);
+    renderAgents();
 }
 
-// ==================== 旧代码继续 ====================
+/**
+ * 移除 Agent
+ */
+function removeAgent(agentId) {
+    const index = agents.findIndex(a => a.id === agentId);
+    if (index >= 0) {
+        agents.splice(index, 1);
+        renderAgents();
+    }
+}
+
+/**
+ * 格式化 Agent 数据
+ */
+function formatAgentData(apiAgent) {
+    return {
+        id: apiAgent.id || apiAgent.sessionKey,
+        name: apiAgent.name || apiAgent.label || `Agent ${apiAgent.id}`,
+        type: apiAgent.type || apiAgent.kind || '助手',
+        description: apiAgent.description || '智能助手',
+        status: mapApiStatus(apiAgent.status),
+        subStatus: mapSubStatus(apiAgent.status),
+        currentTask: apiAgent.currentTask || null,
+        tasksCompleted: apiAgent.tasksCompleted || 0,
+        uptime: apiAgent.uptime || '99.0%',
+        lastActive: apiAgent.lastActive || '刚刚'
+    };
+}
+
+/**
+ * 安排重连
+ */
+function scheduleReconnect() {
+    if (wsReconnectTimer) return;
+
+    wsReconnectTimer = setTimeout(() => {
+        console.log('尝试重新连接 WebSocket...');
+        initWebSocket();
+        wsReconnectTimer = null;
+    }, 5000);
+}
+
+/**
+ * 取消重连
+ */
+function cancelReconnect() {
+    if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = null;
+    }
+}
+
+/**
+ * 关闭 WebSocket 连接
+ */
+function closeWebSocket() {
+    cancelReconnect();
+    if (wsConnection) {
+        wsConnection.close();
+        wsConnection = null;
+    }
+}
+
+// ==================== 真实数据接口 ====================
 
 // 状态图标映射
 const statusIcons = {
