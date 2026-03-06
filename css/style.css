@@ -1,0 +1,125 @@
+/* 自定义动画 */
+
+/* 呼吸动画 - 用于空闲状态 */
+@keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+/* 打字动画 - 用于忙碌状态 */
+@keyframes typing {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+/* 咖啡杯摇晃动画 */
+@keyframes coffeeShake {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+/* 笔记本光标闪烁 */
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* 脉冲动画 - 状态指示器 */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Agent 卡片样式 */
+.agent-card {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.agent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* 状态动画应用 */
+.status-icon-idle {
+    animation: breathe 3s ease-in-out infinite;
+}
+
+.status-icon-coffee {
+    animation: coffeeShake 2s ease-in-out infinite;
+}
+
+.status-icon-busy {
+    animation: typing 0.3s ease-in-out infinite;
+}
+
+.status-indicator {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* 进度条动画 */
+@keyframes progressFill {
+    from { width: 0%; }
+    to { width: var(--progress); }
+}
+
+.progress-bar-animated {
+    animation: progressFill 1s ease-out;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .agent-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* 状态徽章样式 */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.status-badge-idle {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge-busy {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-badge-offline {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6B7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}

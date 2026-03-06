@@ -1,0 +1,21 @@
+{
+  "name": "agent-status-viz",
+  "version": "1.0.0",
+  "description": "Agent状态可视化监控中心",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "agent",
+    "visualization",
+    "monitor",
+    "dashboard"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.1"
+  }
+}

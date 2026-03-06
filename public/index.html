@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent 状态监控中心</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 标题 -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">
+                🤖 Agent 状态监控中心
+            </h1>
+            <p class="text-gray-300 text-lg">实时可视化您的智能助手团队</p>
+            <div class="mt-4 text-sm text-gray-400">
+                <span id="lastUpdate">最后更新: --</span>
+                <button onclick="refreshStatus()" class="ml-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-full text-sm transition">
+                    🔄 刷新
+                </button>
+            </div>
+        </header>
+
+        <!-- Agent 卡片容器 -->
+        <div id="agentContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Agent 卡片将通过 JavaScript 动态生成 -->
+        </div>
+
+        <!-- 状态图例 -->
+        <div class="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-6 max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold text-white mb-4">📊 状态说明</h2>
+            <div class="grid grid-cols-2 gap-4 text-gray-300">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">☕</span>
+                    <span>空闲 - 喝咖啡/休息</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🛋️</span>
+                    <span>空闲 - 坐在沙发</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">💻</span>
+                    <span>忙碌 - 使用笔记本工作</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🔄</span>
+                    <span>离线 - 不可用</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
