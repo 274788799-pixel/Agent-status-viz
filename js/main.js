@@ -1,5 +1,5 @@
-// Agent 数据模型
-const agents = [
+// Agent 数据模型（默认数据，当无法获取真实数据时使用）
+const defaultAgents = [
     {
         id: 'agent-001',
         name: 'Writer Agent',
@@ -9,7 +9,8 @@ const agents = [
         subStatus: 'sofa',
         currentTask: null,
         tasksCompleted: 47,
-        uptime: '98.5%'
+        uptime: '98.5%',
+        lastActive: '5分钟前'
     },
     {
         id: 'agent-002',
@@ -20,7 +21,8 @@ const agents = [
         subStatus: 'working',
         currentTask: '开发可视化界面',
         tasksCompleted: 156,
-        uptime: '99.2%'
+        uptime: '99.2%',
+        lastActive: '刚刚'
     },
     {
         id: 'agent-003',
@@ -31,7 +33,8 @@ const agents = [
         subStatus: 'coffee',
         currentTask: null,
         tasksCompleted: 89,
-        uptime: '97.8%'
+        uptime: '97.8%',
+        lastActive: '10分钟前'
     },
     {
         id: 'agent-004',
@@ -42,7 +45,8 @@ const agents = [
         subStatus: 'working',
         currentTask: '生成月度报告',
         tasksCompleted: 234,
-        uptime: '99.0%'
+        uptime: '99.0%',
+        lastActive: '2分钟前'
     },
     {
         id: 'agent-005',
@@ -53,7 +57,8 @@ const agents = [
         subStatus: 'sofa',
         currentTask: null,
         tasksCompleted: 312,
-        uptime: '99.5%'
+        uptime: '99.5%',
+        lastActive: '15分钟前'
     },
     {
         id: 'agent-006',
@@ -64,9 +69,199 @@ const agents = [
         subStatus: null,
         currentTask: null,
         tasksCompleted: 178,
-        uptime: '99.8%'
+        uptime: '99.8%',
+        lastActive: '1小时前'
+    },
+    {
+        id: 'agent-007',
+        name: 'Researcher',
+        type: '研究助手',
+        description: '进行文献调研、信息搜集和知识整理',
+        status: 'busy',
+        subStatus: 'working',
+        currentTask: '调研AI发展趋势',
+        tasksCompleted: 201,
+        uptime: '98.9%',
+        lastActive: '刚刚'
+    },
+    {
+        id: 'agent-008',
+        name: 'Translator',
+        type: '翻译助手',
+        description: '多语言翻译和本地化服务',
+        status: 'idle',
+        subStatus: 'coffee',
+        currentTask: null,
+        tasksCompleted: 445,
+        uptime: '99.1%',
+        lastActive: '8分钟前'
+    },
+    {
+        id: 'agent-009',
+        name: 'UI Designer',
+        type: '设计助手',
+        description: '用户界面设计和用户体验优化',
+        status: 'busy',
+        subStatus: 'working',
+        currentTask: '设计移动端界面',
+        tasksCompleted: 167,
+        uptime: '97.6%',
+        lastActive: '1分钟前'
+    },
+    {
+        id: 'agent-010',
+        name: 'Security Analyst',
+        type: '安全助手',
+        description: '安全审计、漏洞检测和风险评估',
+        status: 'idle',
+        subStatus: 'sofa',
+        currentTask: null,
+        tasksCompleted: 89,
+        uptime: '99.9%',
+        lastActive: '20分钟前'
+    },
+    {
+        id: 'agent-011',
+        name: 'Database Admin',
+        type: '数据库助手',
+        description: '数据库管理、优化和备份',
+        status: 'idle',
+        subStatus: 'coffee',
+        currentTask: null,
+        tasksCompleted: 323,
+        uptime: '99.4%',
+        lastActive: '12分钟前'
+    },
+    {
+        id: 'agent-012',
+        name: 'Cloud Architect',
+        type: '云架构助手',
+        description: '云服务架构设计和优化',
+        status: 'busy',
+        subStatus: 'working',
+        currentTask: '优化成本配置',
+        tasksCompleted: 134,
+        uptime: '98.3%',
+        lastActive: '3分钟前'
     }
 ];
+
+// 当前 agents 数据
+let agents = [...defaultAgents];
+
+// ==================== 真实数据接口 ====================
+
+// API 配置
+const API_CONFIG = {
+    // OpenClaw Gateway API 端点（需要根据实际情况配置）
+    gatewayEndpoint: '', // 例如: 'http://localhost:3333/api/agents'
+
+    // 使用真实数据的开关
+    useRealData: false, // 设为 true 启用真实数据，false 使用模拟数据
+
+    // 数据刷新间隔（毫秒）
+    refreshInterval: 30000
+};
+
+/**
+ * 从 OpenClaw Gateway 获取真实 Agent 数据
+ */
+async function fetchRealAgentData() {
+    try {
+        const response = await fetch(`${API_CONFIG.gatewayEndpoint}/agents`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // 将 API 数据转换为我们的格式
+        const formattedAgents = data.agents.map(apiAgent => ({
+            id: apiAgent.sessionKey || apiAgent.id,
+            name: apiAgent.label || apiAgent.name || `Agent ${apiAgent.id}`,
+            type: apiAgent.kind || apiAgent.type || '助手',
+            description: apiAgent.description || '智能助手',
+            status: mapApiStatus(apiAgent.status),
+            subStatus: mapSubStatus(apiAgent.status),
+            currentTask: apiAgent.currentTask || null,
+            tasksCompleted: apiAgent.tasksCompleted || 0,
+            uptime: apiAgent.uptime || '99.0%',
+            lastActive: apiAgent.lastActive || '刚刚'
+        }));
+
+        return formattedAgents;
+    } catch (error) {
+        console.warn('获取真实数据失败，使用模拟数据:', error.message);
+        return null;
+    }
+}
+
+/**
+ * 映射 API 状态到我们的状态格式
+ */
+function mapApiStatus(apiStatus) {
+    const statusLower = apiStatus.toLowerCase();
+
+    if (statusLower.includes('busy') || statusLower.includes('active')) {
+        return 'busy';
+    } else if (statusLower.includes('idle') || statusLower.includes('waiting')) {
+        return 'idle';
+    } else if (statusLower.includes('offline') || statusLower.includes('disconnected')) {
+        return 'offline';
+    }
+
+    return 'idle'; // 默认状态
+}
+
+/**
+ * 映射子状态
+ */
+function mapSubStatus(status) {
+    const statusLower = status.toLowerCase();
+
+    if (statusLower.includes('busy') || statusLower.includes('active')) {
+        return 'working';
+    }
+
+    // 空闲状态随机分配
+    return Math.random() > 0.5 ? 'sofa' : 'coffee';
+}
+
+/**
+ * 更新 Agent 数据
+ */
+async function updateAgentData() {
+    if (API_CONFIG.useRealData && API_CONFIG.gatewayEndpoint) {
+        const realData = await fetchRealAgentData();
+
+        if (realData && realData.length > 0) {
+            agents = realData;
+            console.log('✅ 已更新为真实数据:', agents.length, '个 Agent');
+        }
+    }
+
+    renderAgents();
+}
+
+/**
+ * 切换数据源（真实/模拟）
+ */
+function toggleDataSource() {
+    API_CONFIG.useRealData = !API_CONFIG.useRealData;
+
+    if (API_CONFIG.useRealData) {
+        alert('已切换到真实数据源（如果可用）');
+    } else {
+        agents = [...defaultAgents];
+        alert('已切换到模拟数据');
+        renderAgents();
+    }
+
+    updateAgentData();
+}
+
+// ==================== 旧代码继续 ====================
 
 // 状态图标映射
 const statusIcons = {
@@ -143,14 +338,18 @@ function createAgentCard(agent) {
             ${currentTaskHtml}
 
             <!-- 统计信息 -->
-            <div class="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-4">
+            <div class="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-2">
                 <div>
-                    <div class="text-xs text-gray-400">已完成任务</div>
-                    <div class="text-2xl font-bold text-white">${agent.tasksCompleted}</div>
+                    <div class="text-xs text-gray-400">已完成</div>
+                    <div class="text-lg font-bold text-white">${agent.tasksCompleted}</div>
                 </div>
                 <div>
                     <div class="text-xs text-gray-400">可用率</div>
-                    <div class="text-2xl font-bold text-green-400">${agent.uptime}</div>
+                    <div class="text-lg font-bold text-green-400">${agent.uptime}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">活跃</div>
+                    <div class="text-lg font-bold text-blue-400">${agent.lastActive || '刚刚'}</div>
                 </div>
             </div>
 
@@ -199,7 +398,7 @@ function toggleAgentStatus(agentId) {
 
 // 刷新状态
 function refreshStatus() {
-    renderAgents();
+    updateAgentData();
 }
 
 // 更新最后更新时间
@@ -216,18 +415,24 @@ function updateLastUpdateTime() {
     document.getElementById('lastUpdate').textContent = `最后更新: ${timeStr}`;
 }
 
-// 自动刷新（可选，每30秒）
+// 自动刷新（每30秒）
 setInterval(() => {
-    // 模拟随机状态变化
-    agents.forEach(agent => {
-        if (agent.status !== 'offline' && Math.random() < 0.1) {
-            toggleAgentStatus(agent.id);
-        }
-    });
-    renderAgents();
-}, 30000);
+    if (API_CONFIG.useRealData) {
+        // 使用真实数据源时，从 API 获取最新状态
+        updateAgentData();
+    } else {
+        // 使用模拟数据时，随机改变状态
+        agents.forEach(agent => {
+            if (agent.status !== 'offline' && Math.random() < 0.1) {
+                toggleAgentStatus(agent.id);
+            }
+        });
+        renderAgents();
+    }
+}, API_CONFIG.refreshInterval);
 
 // 页面加载时渲染
-document.addEventListener('DOMContentLoaded', () => {
-    renderAgents();
+document.addEventListener('DOMContentLoaded', async () => {
+    // 尝试加载真实数据
+    await updateAgentData();
 });
