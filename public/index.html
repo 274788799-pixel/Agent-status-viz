@@ -83,27 +83,39 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Gateway URL 配置 -->
+                    <!-- 环境变量说明 -->
+                    <div class="bg-blue-900/30 border border-blue-500/30 rounded-lg p-3">
+                        <p class="text-sm text-blue-200">
+                            <strong>💡 环境变量配置</strong>
+                        </p>
+                        <p class="text-xs text-blue-300 mt-1">
+                            Token 现在从服务器环境变量自动获取，无需在浏览器中配置。
+                        </p>
+                    </div>
+
+                    <!-- Gateway URL 显示 -->
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">
-                            OpenClaw Gateway URL
+                            Gateway URL（环境变量）
                         </label>
                         <div class="flex gap-2">
                             <input
                                 type="text"
                                 id="gatewayUrlInput"
                                 placeholder="http://localhost:3333"
-                                class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value="http://localhost:3333"
+                                readonly
+                                class="flex-1 bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed"
                             >
                             <button
-                                onclick="saveGatewayUrl()"
-                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition"
+                                onclick="showProxyConfig()"
+                                class="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm transition"
                             >
-                                保存
+                                查看配置
                             </button>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">
-                            例如: http://localhost:3333 或 http://your-server:3333
+                            在服务器设置: <code>export OPENCLAW_GATEWAY_URL=...</code>
                         </p>
                     </div>
 
@@ -134,6 +146,16 @@
                                 ⚫ 重置模拟数据
                             </button>
                         </div>
+                    </div>
+
+                    <!-- 帮助信息 -->
+                    <div class="border-t border-gray-700 pt-3">
+                        <p class="text-xs text-gray-400">
+                            <strong>设置步骤:</strong><br>
+                            1. 设置环境变量（服务器端）<br>
+                            2. 重启服务器: <code>npm start</code><br>
+                            3. 点击"连接 Gateway"
+                        </p>
                     </div>
                 </div>
             </div>

@@ -110,7 +110,7 @@ function toggleDataSource() {
         // 当前是模拟模式 -> 切换到自定义API模式
         API_CONFIG.useRealData = true;
         API_CONFIG.useOpenClawGateway = false;
-        
+
         if (!API_CONFIG.gatewayEndpoint) {
             alert('请先配置 Gateway API 端点地址\n\n当前使用 OpenClaw Gateway 模式');
             API_CONFIG.useRealData = false;
@@ -122,7 +122,7 @@ function toggleDataSource() {
         // 当前是自定义API模式 -> 切换到OpenClaw Gateway模式
         API_CONFIG.useRealData = false;
         API_CONFIG.useOpenClawGateway = true;
-        alert('已切换到 OpenClaw Gateway 模式');
+        alert('已切换到 OpenClaw Gateway 模式（使用环境变量配置）');
     } else {
         // 当前是OpenClaw Gateway模式 -> 切换回模拟模式
         API_CONFIG.useRealData = false;
@@ -288,12 +288,12 @@ function updateConnectionStatus() {
 // 页面加载时更新连接状态
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
-    
-    // 从 localStorage 加载保存的 Gateway URL
-    const savedGatewayUrl = localStorage.getItem('openclaw_gateway_url');
-    if (savedGatewayUrl) {
-        updateGatewayUrl(savedGatewayUrl);
-        document.getElementById('gatewayUrlInput').value = savedGatewayUrl;
+
+    // 不再从 localStorage 读取 URL，因为现在使用环境变量
+    // 显示默认提示
+    const input = document.getElementById('gatewayUrlInput');
+    if (input) {
+        input.value = 'http://localhost:3333 (从环境变量)';
     }
 });
 
@@ -309,6 +309,7 @@ function toggleConfigPanel() {
 
 /**
  * 保存 Gateway URL
+ * 注意：现在 URL 从环境变量获取，这里只显示当前配置
  */
 function saveGatewayUrl() {
     const input = document.getElementById('gatewayUrlInput');
@@ -319,31 +320,27 @@ function saveGatewayUrl() {
         return;
     }
 
-    updateGatewayUrl(url);
-    
-    // 保存到 localStorage
-    localStorage.setItem('openclaw_gateway_url', url);
-    
-    alert('✅ Gateway URL 已保存!\n\n点击"连接 Gateway"按钮开始获取真实数据');
+    // 显示提示信息
+    alert('⚠️ 配置说明:\n\n' +
+          'Gateway URL 现在从服务器环境变量获取:\n' +
+          'OPENCLAW_GATEWAY_URL\n\n' +
+          '请按以下步骤配置:\n' +
+          '1. 设置环境变量: export OPENCLAW_GATEWAY_URL=' + url + '\n' +
+          '2. 可选: export OPENCLAW_GATEWAY_TOKEN=your_token\n' +
+          '3. 重启服务器: npm start\n\n' +
+          '注意: Token 会自动从环境变量加载，无需在浏览器中配置');
 }
 
 /**
  * 测试 Gateway 连接
  */
 async function testGateway() {
-    const input = document.getElementById('gatewayUrlInput');
-    const url = input.value.trim();
-
-    if (!url) {
-        alert('请先输入 Gateway URL');
-        return;
-    }
-
-    // 更新配置
-    updateGatewayUrl(url);
-
     // 显示测试中状态
-    alert('🔄 正在测试 Gateway 连接...\n\n请查看浏览器控制台获取详细信息');
+    alert('🔄 正在测试 Gateway 连接...\n\n' +
+          '请查看浏览器控制台获取详细信息\n\n' +
+          '确保已设置环境变量:\n' +
+          '- OPENCLAW_GATEWAY_URL\n' +
+          '- OPENCLAW_GATEWAY_TOKEN (可选)');
 
     // 执行测试
     const result = await testGatewayConnection();
@@ -351,7 +348,31 @@ async function testGateway() {
     if (result.success) {
         alert(`${result.message}\n\n现在可以点击"连接 Gateway"按钮获取真实数据`);
     } else {
-        alert(result.message);
+        alert(result.message + '\n\n' +
+              '请检查:\n' +
+              '1. 是否设置了 OPENCLAW_GATEWAY_URL 环境变量\n' +
+              '2. OpenClaw Gateway 是否正在运行\n' +
+              '3. 浏览器控制台是否有详细错误信息');
+    }
+}
+
+/**
+ * 获取并显示代理配置信息
+ */
+async function showProxyConfig() {
+    const config = await getProxyConfig();
+
+    if (config) {
+        alert('📋 当前代理配置:\n\n' +
+              `Gateway URL: ${config.gatewayUrl}\n` +
+              `Token 状态: ${config.message}\n\n` +
+              '💡 提示:\n' +
+              '- Token 从服务器环境变量自动加载\n' +
+              '- 无需在浏览器中手动配置\n' +
+              '- 如需修改，请更新环境变量并重启服务器');
+    } else {
+        alert('❌ 无法获取配置信息\n\n' +
+              '请确保服务器正在运行: npm start');
     }
 }
 
@@ -359,18 +380,7 @@ async function testGateway() {
  * 快捷连接到 Gateway
  */
 async function quickConnectToGateway() {
-    const input = document.getElementById('gatewayUrlInput');
-    const url = input.value.trim();
-
-    if (!url) {
-        alert('请先配置 Gateway URL');
-        return;
-    }
-
-    // 更新配置
-    updateGatewayUrl(url);
-
-    // 切换到 OpenClaw Gateway 模式
+    // 直接切换到 OpenClaw Gateway 模式
     API_CONFIG.useOpenClawGateway = true;
     API_CONFIG.useRealData = false;
 
@@ -387,7 +397,7 @@ async function quickConnectToGateway() {
     if (API_CONFIG.useOpenClawGateway && agents.length > 0) {
         showNotification(`✅ 成功连接！发现 ${agents.length} 个 Agent`, 'success');
     } else {
-        showNotification('⚠️ 连接失败，请检查 Gateway URL 配置', 'warning');
+        showNotification('⚠️ 连接失败，请检查环境变量配置', 'warning');
     }
 }
 
@@ -398,15 +408,15 @@ function resetToMockData() {
     API_CONFIG.useOpenClawGateway = false;
     API_CONFIG.useRealData = false;
     API_CONFIG.useWebSocket = false;
-    
+
     closeWebSocket();
-    
+
     agents = [...defaultAgents];
-    
+
     toggleConfigPanel();
     updateAgentData();
     updateConnectionStatus();
-    
+
     showNotification('已重置为模拟数据', 'info');
 }
 
