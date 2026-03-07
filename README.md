@@ -9,6 +9,12 @@
   - 忙碌状态: 💻 在办公位使用笔记本
   - 离线状态: 🔄 不可用
 
+- 🔗 **OpenClaw Gateway 集成**
+  - ✅ 真实连接 OpenClaw Gateway
+  - 📡 获取真实的 Agent 会话数据
+  - 🔧 配置面板支持自定义 Gateway URL
+  - 🧪 连接测试功能
+
 - 📊 **实时信息**
   - Agent 基本信息展示
   - 当前任务显示
@@ -116,9 +122,58 @@ const statusIcons = {
 - 卡片样式
 - 响应式布局
 
+## 🔗 OpenClaw Gateway 集成
+
+### 连接真实数据
+
+现在支持连接到 OpenClaw Gateway，获取真实的 Agent 会话数据！
+
+#### 步骤 1: 确保 Gateway 运行
+
+```bash
+# 检查 Gateway 状态
+openclaw gateway status
+
+# 如果未运行，启动它
+openclaw gateway start
+```
+
+#### 步骤 2: 配置 Gateway URL
+
+1. 打开应用后，点击右下角的 ⚙️ 配置按钮
+2. 在配置面板中输入 Gateway URL
+   - 本地开发: `http://localhost:3333`
+   - 远程服务器: `http://your-server:3333`
+3. 点击"保存"按钮
+
+#### 步骤 3: 连接 Gateway
+
+- **方法 1**: 使用配置面板中的"🔗 连接 Gateway"按钮
+- **方法 2**: 点击顶部的"🔗 数据源"按钮，切换到 OpenClaw Gateway 模式
+
+#### 步骤 4: 测试连接
+
+点击"🧪 测试 Gateway 连接"按钮，验证连接是否正常。
+
+### 三种数据模式
+
+1. **⚫ 模拟数据**: 使用预设的模拟数据（默认）
+2. **🟡 自定义 API 轮询**: 连接到自定义 API 端点
+3. **🟢 OpenClaw Gateway**: 连接到 OpenClaw Gateway 获取真实数据
+
+### 数据源切换
+
+点击顶部的"🔗 数据源"按钮，可以在三种模式之间循环切换：
+- 模拟数据 → 自定义 API → OpenClaw Gateway → 模拟数据
+
+### 实时更新
+
+点击顶部的"⚡ 实时"按钮可以启用 WebSocket 实时更新（需要 Gateway 支持）。
+
 ## 🔮 未来计划
 
-- [ ] 接入真实 OpenClaw API
+- [x] 接入真实 OpenClaw Gateway API
+- [ ] WebSocket 实时更新支持
 - [ ] 添加历史状态记录
 - [ ] 支持更多状态类型
 - [ ] 添加通知功能

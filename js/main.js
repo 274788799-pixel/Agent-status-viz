@@ -162,6 +162,9 @@ const API_CONFIG = {
     // 使用真实数据的开关
     useRealData: false, // 设为 true 启用真实数据，false 使用模拟数据
 
+    // 使用 OpenClaw Gateway 的开关
+    useOpenClawGateway: false, // 设为 true 启用 OpenClaw Gateway
+
     // 使用 WebSocket 实时更新
     useWebSocket: false, // 设为 true 启用 WebSocket
 

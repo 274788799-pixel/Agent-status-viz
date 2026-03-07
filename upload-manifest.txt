@@ -1,0 +1,5 @@
+public/index.html
+css/style.css
+js/main.js
+js/api.js
+js/theme.js

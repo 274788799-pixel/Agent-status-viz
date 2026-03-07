@@ -71,6 +71,24 @@ function mapSubStatus(status) {
  * 更新 Agent 数据
  */
 async function updateAgentData() {
+    // 优先使用 OpenClaw Gateway
+    if (API_CONFIG.useOpenClawGateway && typeof fetchOpenClawSessions === 'function') {
+        const sessionsData = await fetchOpenClawSessions();
+
+        if (sessionsData && sessionsData.sessions) {
+            const formattedAgents = convertSessionsToAgents(sessionsData);
+            
+            if (formattedAgents.length > 0) {
+                agents = formattedAgents;
+                console.log('✅ 已更新为 OpenClaw Gateway 数据:', agents.length, '个 Agent');
+                updateConnectionStatus();
+                renderAgents();
+                return;
+            }
+        }
+    }
+
+    // 回退到自定义 API 端点
     if (API_CONFIG.useRealData && API_CONFIG.gatewayEndpoint) {
         const realData = await fetchRealAgentData();
 
@@ -84,14 +102,31 @@ async function updateAgentData() {
 }
 
 /**
- * 切换数据源（真实/模拟）
+ * 切换数据源（模拟/自定义API/OpenClaw Gateway）
  */
 function toggleDataSource() {
-    API_CONFIG.useRealData = !API_CONFIG.useRealData;
-
-    if (API_CONFIG.useRealData) {
-        alert('已切换到真实数据源（如果可用）');
+    // 三种模式循环切换：0=模拟, 1=自定义API, 2=OpenClaw Gateway
+    if (!API_CONFIG.useRealData && !API_CONFIG.useOpenClawGateway) {
+        // 当前是模拟模式 -> 切换到自定义API模式
+        API_CONFIG.useRealData = true;
+        API_CONFIG.useOpenClawGateway = false;
+        
+        if (!API_CONFIG.gatewayEndpoint) {
+            alert('请先配置 Gateway API 端点地址\n\n当前使用 OpenClaw Gateway 模式');
+            API_CONFIG.useRealData = false;
+            API_CONFIG.useOpenClawGateway = true;
+        } else {
+            alert('已切换到自定义 API 模式');
+        }
+    } else if (API_CONFIG.useRealData && !API_CONFIG.useOpenClawGateway) {
+        // 当前是自定义API模式 -> 切换到OpenClaw Gateway模式
+        API_CONFIG.useRealData = false;
+        API_CONFIG.useOpenClawGateway = true;
+        alert('已切换到 OpenClaw Gateway 模式');
     } else {
+        // 当前是OpenClaw Gateway模式 -> 切换回模拟模式
+        API_CONFIG.useRealData = false;
+        API_CONFIG.useOpenClawGateway = false;
         agents = [...defaultAgents];
         alert('已切换到模拟数据');
         renderAgents();
@@ -233,13 +268,16 @@ function updateConnectionStatus() {
     if (!statusEl) return;
 
     if (API_CONFIG.useWebSocket && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-        statusEl.textContent = '🟢 实时连接';
+        statusEl.textContent = '🟢 WebSocket 实时连接';
         statusEl.className = 'text-green-400';
     } else if (API_CONFIG.useWebSocket) {
-        statusEl.textContent = '🟡 连接中...';
+        statusEl.textContent = '🟡 WebSocket 连接中...';
         statusEl.className = 'text-yellow-400';
+    } else if (API_CONFIG.useOpenClawGateway) {
+        statusEl.textContent = '🟢 OpenClaw Gateway';
+        statusEl.className = 'text-green-400';
     } else if (API_CONFIG.useRealData) {
-        statusEl.textContent = '🟡 轮询模式';
+        statusEl.textContent = '🟡 自定义 API 轮询';
         statusEl.className = 'text-yellow-400';
     } else {
         statusEl.textContent = '⚫ 模拟数据';
@@ -250,7 +288,127 @@ function updateConnectionStatus() {
 // 页面加载时更新连接状态
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
+    
+    // 从 localStorage 加载保存的 Gateway URL
+    const savedGatewayUrl = localStorage.getItem('openclaw_gateway_url');
+    if (savedGatewayUrl) {
+        updateGatewayUrl(savedGatewayUrl);
+        document.getElementById('gatewayUrlInput').value = savedGatewayUrl;
+    }
 });
+
+// ==================== 配置面板功能 ====================
+
+/**
+ * 切换配置面板显示/隐藏
+ */
+function toggleConfigPanel() {
+    const panel = document.getElementById('configPanel');
+    panel.classList.toggle('hidden');
+}
+
+/**
+ * 保存 Gateway URL
+ */
+function saveGatewayUrl() {
+    const input = document.getElementById('gatewayUrlInput');
+    const url = input.value.trim();
+
+    if (!url) {
+        alert('请输入 Gateway URL');
+        return;
+    }
+
+    updateGatewayUrl(url);
+    
+    // 保存到 localStorage
+    localStorage.setItem('openclaw_gateway_url', url);
+    
+    alert('✅ Gateway URL 已保存!\n\n点击"连接 Gateway"按钮开始获取真实数据');
+}
+
+/**
+ * 测试 Gateway 连接
+ */
+async function testGateway() {
+    const input = document.getElementById('gatewayUrlInput');
+    const url = input.value.trim();
+
+    if (!url) {
+        alert('请先输入 Gateway URL');
+        return;
+    }
+
+    // 更新配置
+    updateGatewayUrl(url);
+
+    // 显示测试中状态
+    alert('🔄 正在测试 Gateway 连接...\n\n请查看浏览器控制台获取详细信息');
+
+    // 执行测试
+    const result = await testGatewayConnection();
+
+    if (result.success) {
+        alert(`${result.message}\n\n现在可以点击"连接 Gateway"按钮获取真实数据`);
+    } else {
+        alert(result.message);
+    }
+}
+
+/**
+ * 快捷连接到 Gateway
+ */
+async function quickConnectToGateway() {
+    const input = document.getElementById('gatewayUrlInput');
+    const url = input.value.trim();
+
+    if (!url) {
+        alert('请先配置 Gateway URL');
+        return;
+    }
+
+    // 更新配置
+    updateGatewayUrl(url);
+
+    // 切换到 OpenClaw Gateway 模式
+    API_CONFIG.useOpenClawGateway = true;
+    API_CONFIG.useRealData = false;
+
+    // 关闭配置面板
+    toggleConfigPanel();
+
+    // 显示加载中状态
+    showNotification('正在连接 OpenClaw Gateway...', 'info');
+
+    // 获取数据
+    await updateAgentData();
+
+    // 显示结果
+    if (API_CONFIG.useOpenClawGateway && agents.length > 0) {
+        showNotification(`✅ 成功连接！发现 ${agents.length} 个 Agent`, 'success');
+    } else {
+        showNotification('⚠️ 连接失败，请检查 Gateway URL 配置', 'warning');
+    }
+}
+
+/**
+ * 重置为模拟数据
+ */
+function resetToMockData() {
+    API_CONFIG.useOpenClawGateway = false;
+    API_CONFIG.useRealData = false;
+    API_CONFIG.useWebSocket = false;
+    
+    closeWebSocket();
+    
+    agents = [...defaultAgents];
+    
+    toggleConfigPanel();
+    updateAgentData();
+    updateConnectionStatus();
+    
+    showNotification('已重置为模拟数据', 'info');
+}
 
 // 添加通知动画样式
 const style = document.createElement('style');

@@ -73,8 +73,83 @@
 
         <!-- 通知容器 -->
         <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+        <!-- 配置面板 -->
+        <div id="configPanel" class="fixed bottom-4 right-4 z-40 hidden">
+            <div class="bg-gray-800/95 backdrop-blur-sm rounded-xl p-4 shadow-2xl border border-white/20 max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">⚙️ 配置面板</h3>
+                    <button onclick="toggleConfigPanel()" class="text-gray-400 hover:text-white text-xl">×</button>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Gateway URL 配置 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            OpenClaw Gateway URL
+                        </label>
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                id="gatewayUrlInput"
+                                placeholder="http://localhost:3333"
+                                class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                            <button
+                                onclick="saveGatewayUrl()"
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition"
+                            >
+                                保存
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">
+                            例如: http://localhost:3333 或 http://your-server:3333
+                        </p>
+                    </div>
+
+                    <!-- 测试连接 -->
+                    <div>
+                        <button
+                            onclick="testGateway()"
+                            class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm transition flex items-center justify-center gap-2"
+                        >
+                            🧪 测试 Gateway 连接
+                        </button>
+                    </div>
+
+                    <!-- 快捷操作 -->
+                    <div class="border-t border-gray-700 pt-4">
+                        <p class="text-sm text-gray-300 mb-2">快捷操作:</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                onclick="quickConnectToGateway()"
+                                class="bg-purple-500 hover:bg-purple-600 text-white py-2 px-3 rounded-lg text-sm transition"
+                            >
+                                🔗 连接 Gateway
+                            </button>
+                            <button
+                                onclick="resetToMockData()"
+                                class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-sm transition"
+                            >
+                                ⚫ 重置模拟数据
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置按钮 -->
+        <button
+            onclick="toggleConfigPanel()"
+            class="fixed bottom-4 right-4 z-30 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition"
+            title="打开配置"
+        >
+            ⚙️
+        </button>
     </div>
 
+    <script src="js/openclaw-gateway.js"></script>
     <script src="js/main.js"></script>
     <script src="js/additional.js"></script>
 </body>

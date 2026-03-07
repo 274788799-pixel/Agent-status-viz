@@ -1,0 +1,21 @@
+{
+  "project_name": "agent-status-viz",
+  "files": [
+    {
+      "path": "index.html",
+      "content": "$(cat public/index.html | base64 -w 0)"
+    },
+    {
+      "path": "css/style.css",
+      "content": "$(cat css/style.css | base64 -w 0)"
+    },
+    {
+      "path": "js/main.js",
+      "content": "$(cat js/main.js | base64 -w 0)"
+    },
+    {
+      "path": "js/additional.js",
+      "content": "$(cat js/additional.js | base64 -w 0)"
+    }
+  ]
+}
