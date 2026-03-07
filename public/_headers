@@ -1,0 +1,15 @@
+# Cloudflare Pages Headers Configuration
+# 确保 JavaScript 和 CSS 文件返回正确的 MIME 类型
+
+/js/*
+  Content-Type: text/javascript
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
+
+/css/*
+  Content-Type: text/css
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
+
+/*
+  X-Content-Type-Options: nosniff
