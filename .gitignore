@@ -31,6 +31,10 @@ Thumbs.db
 # 服务器文件（不需要部署到 Cloudflare）
 server.js
 
+# 开发文件（public 目录外）
+/js/
+/css/
+
 # 构建输出
 dist/
 build/
