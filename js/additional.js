@@ -295,6 +295,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (input) {
         input.value = 'http://localhost:3333 (从环境变量)';
     }
+
+    // 绑定配置按钮点击事件
+    const configButton = document.getElementById('configButton');
+    if (configButton) {
+        configButton.addEventListener('click', toggleConfigPanel);
+        console.log('✅ 配置按钮已绑定');
+    } else {
+        console.error('❌ 未找到配置按钮元素');
+    }
+
+    // 确保 toggleConfigPanel 函数存在
+    if (typeof toggleConfigPanel !== 'function') {
+        console.error('❌ toggleConfigPanel 函数未定义');
+    }
 });
 
 // ==================== 配置面板功能 ====================
